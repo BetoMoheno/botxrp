@@ -1,0 +1,5 @@
+pandas
+numpy
+schedule
+binance-connector
+Flask
