@@ -1,12 +1,16 @@
+import os
 import pandas as pd
 import numpy as np
 import schedule
 import time
 from binance.client import Client
 
-# 🔐 Claves de API de Binance (¡NO LAS COMPARTAS!)
-api_key = "SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf"
-api_secret = "HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT"
+# 🔐 Cargar claves de Binance desde variables de entorno
+api_key = os.getenv("SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf")
+api_secret = os.getenv("HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT")
+
+if not api_key or not api_secret:
+    raise ValueError("🔴 Error: Claves de API no encontradas en las variables de entorno.")
 
 # Conectar con Binance
 client = Client(api_key, api_secret)
@@ -25,7 +29,7 @@ def calculate_ut_bot(data, key_value=1, atr_period=10):
     df = data.copy()
     df['atr'] = df['high'] - df['low']  # ATR aproximado
     df['n_loss'] = key_value * df['atr']
-    df['xATRStop'] = np.nan
+    df['xATRStop'] = df['close']  # Inicializa con valores de cierre para evitar NaN
     df['pos'] = 0
 
     for i in range(1, len(df)):
@@ -53,11 +57,11 @@ def select_best_asset(xrp_df, paxg_df):
 # 🏦 Colocar orden en Binance
 def place_order(symbol, side, amount):
     try:
-        order = client.order_market(
-            symbol=symbol,
-            side=side,
-            quantity=amount
-        )
+        if side.upper() == "BUY":
+            order = client.order_market_buy(symbol=symbol, quantity=amount)
+        else:
+            order = client.order_market_sell(symbol=symbol, quantity=amount)
+
         print(f"✅ Orden ejecutada: {side} {amount} de {symbol}")
         return order
     except Exception as e:
@@ -92,7 +96,12 @@ schedule.every().day.at("00:00").do(run_bot)
 
 print("🤖 Bot en ejecución...")
 
-# Mantener el bot corriendo
+# Mantener el bot corriendo con manejo de errores
 while True:
-    schedule.run_pending()
+    try:
+        schedule.run_pending()
+    except Exception as e:
+        print(f"⚠️ Error en el bot: {e}")
+    
     time.sleep(60)  # Espera 60 segundos antes de volver a verificar
+
