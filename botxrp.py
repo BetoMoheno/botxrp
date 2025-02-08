@@ -27,9 +27,9 @@ def get_candles(symbol, interval='1d', limit=100):
 # 📊 Implementar UT Bot Alerts
 def calculate_ut_bot(data, key_value=1, atr_period=10):
     df = data.copy()
-    df['atr'] = df['high'] - df['low']  # ATR aproximado
+    df['atr'] = df['high'] - df['low']
     df['n_loss'] = key_value * df['atr']
-    df['xATRStop'] = df['close']  # Inicializa con valores de cierre para evitar NaN
+    df['xATRStop'] = df['close']
     df['pos'] = 0
 
     for i in range(1, len(df)):
@@ -85,35 +85,23 @@ def run_bot():
 
     # Ejecutar compra según el activo en tendencia
     if selected_asset == "XRPUSDT":
-        place_order("XRPUSDT", "BUY", 10)  # Compra 10 XRP
+        place_order("XRPUSDT", "BUY", 10)
     elif selected_asset == "PAXGUSDT":
-        place_order("PAXGUSDT", "BUY", 0.01)  # Compra 0.01 PAXG
+        place_order("PAXGUSDT", "BUY", 0.01)
     else:
         print("🔍 No hay oportunidades, mantener en USDT")
 
 # ⏳ Automatizar el bot para que corra todos los días a medianoche
 schedule.every().day.at("00:00").do(run_bot)
 
-print("🤖 Bot en ejecución...")
-
-# Mantener el bot corriendo con manejo de errores
-while True:
-    try:
-        schedule.run_pending()
-    except Exception as e:
-        print(f"⚠️ Error en el bot: {e}")
-    
-    time.sleep(60)  # Espera 60 segundos antes de volver a verificar
-
-from flask import Flask
-import threading
-
+# 🔥 Servidor Flask para Cloud Run
 app = Flask(__name__)
 
 @app.route("/")
 def home():
     return "Bot de trading en ejecución 🚀"
 
+# 🔄 Función para mantener el bot corriendo en un hilo separado
 def start_bot():
     while True:
         try:
@@ -124,11 +112,11 @@ def start_bot():
 
 if __name__ == "__main__":
     # Iniciar el bot en un hilo aparte
-    bot_thread = threading.Thread(target=start_bot)
+    bot_thread = threading.Thread(target=start_bot, daemon=True)
     bot_thread.start()
 
-    # Iniciar el servidor Flask
-    app.run(host="0.0.0.0", port=8080)
-
+    # Iniciar el servidor Flask para Cloud Run
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
 
 
