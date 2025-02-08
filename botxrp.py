@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import schedule
 import time
+import threading
+from flask import Flask
 from binance.client import Client
 
 # 🔐 Cargar claves de Binance desde variables de entorno
