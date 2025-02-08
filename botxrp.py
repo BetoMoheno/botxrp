@@ -1,21 +1,20 @@
 import os
 import threading
 import time
+import pandas as pd
+import schedule
 from flask import Flask
 from binance.client import Client
 
-# 🔐 Cargar claves de Binance desde variables de entorno
+# 🔐 1. Cargar claves de API de Binance desde variables de entorno
 api_key = os.getenv("SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf")
 api_secret = os.getenv("HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT")
 
 if not api_key or not api_secret:
-    raise ValueError("🔴 Error: Claves de API no encontradas en las variables de entorno.")
-
-# ✅ Verificar conexión con Binance
-if not api_key or not api_secret:
     print("🔴 ERROR: Claves de API de Binance no encontradas. Verifica tus variables de entorno.")
     exit(1)
 
+# 🔗 2. Conectar con Binance
 try:
     client = Client(api_key, api_secret)
     print("✅ Conexión con Binance establecida correctamente")
@@ -23,20 +22,26 @@ except Exception as e:
     print(f"❌ ERROR al conectar con Binance: {e}")
     exit(1)
 
-# Conectar con Binance
-client = Client(api_key, api_secret)
-
-# 📈 Obtener precios de velas (1 día)
+# 📈 3. Obtener precios de velas (candlestick) en formato DataFrame
 def get_candles(symbol, interval='1d', limit=100):
-    candles = client.get_klines(symbol=symbol, interval=interval, limit=limit)
-    df = pd.DataFrame(candles, columns=['time', 'open', 'high', 'low', 'close', 'volume', 
-                                        'close_time', 'quote_asset_volume', 'num_trades', 
-                                        'taker_buy_base_vol', 'taker_buy_quote_vol', 'ignore'])
-    df = df[['time', 'open', 'high', 'low', 'close', 'volume']].astype(float)
-    return df
+    try:
+        candles = client.get_klines(symbol=symbol, interval=interval, limit=limit)
+        df = pd.DataFrame(candles, columns=[
+            'time', 'open', 'high', 'low', 'close', 'volume', 
+            'close_time', 'quote_asset_volume', 'num_trades', 
+            'taker_buy_base_vol', 'taker_buy_quote_vol', 'ignore'
+        ])
+        df = df[['time', 'open', 'high', 'low', 'close', 'volume']].astype(float)
+        return df
+    except Exception as e:
+        print(f"❌ ERROR al obtener datos de {symbol}: {e}")
+        return None
 
-# 📊 Implementar UT Bot Alerts
+# 📊 4. Implementar UT Bot Alerts (estrategia de trading)
 def calculate_ut_bot(data, key_value=1, atr_period=10):
+    if data is None:
+        return None
+    
     df = data.copy()
     df['atr'] = df['high'] - df['low']
     df['n_loss'] = key_value * df['atr']
@@ -56,16 +61,16 @@ def calculate_ut_bot(data, key_value=1, atr_period=10):
 
     return df
 
-# 🔍 Seleccionar el mejor activo para invertir
+# 🔍 5. Seleccionar el mejor activo para invertir (XRP o PAXG)
 def select_best_asset(xrp_df, paxg_df):
-    if xrp_df['pos'].iloc[-1] == 1:
+    if xrp_df is not None and xrp_df['pos'].iloc[-1] == 1:
         return "XRPUSDT"
-    elif paxg_df['pos'].iloc[-1] == 1:
+    elif paxg_df is not None and paxg_df['pos'].iloc[-1] == 1:
         return "PAXGUSDT"
     else:
         return "USDT"
 
-# 🏦 Colocar orden en Binance
+# 🏦 6. Colocar orden de compra o venta en Binance
 def place_order(symbol, side, amount):
     try:
         if side.upper() == "BUY":
@@ -76,12 +81,12 @@ def place_order(symbol, side, amount):
         print(f"✅ Orden ejecutada: {side} {amount} de {symbol}")
         return order
     except Exception as e:
-        print(f"❌ Error al ejecutar orden: {e}")
+        print(f"❌ ERROR al ejecutar orden: {e}")
 
-# 🤖 Función principal del bot
+# 🤖 7. Función principal del bot
 def run_bot():
     print("🚀 Ejecutando bot de trading...")
-    
+
     # Obtener datos de XRP y PAXGOLD
     xrp_data = get_candles("XRPUSDT")
     paxg_data = get_candles("PAXGUSDT")
@@ -102,10 +107,10 @@ def run_bot():
     else:
         print("🔍 No hay oportunidades, mantener en USDT")
 
-# ⏳ Automatizar el bot para que corra todos los días a medianoche
+# ⏳ 8. Automatizar el bot para que corra todos los días a medianoche
 schedule.every().day.at("00:00").do(run_bot)
 
-# 🔥 Servidor Flask para Cloud Run
+# 🔥 9. Servidor Flask para Cloud Run
 app = Flask(__name__)
 
 @app.route("/")
@@ -116,7 +121,16 @@ def home():
 def health():
     return "✅ OK", 200
 
-# 🛠 Iniciar Flask en un hilo separado
+# 🔄 10. Hilo separado para ejecutar el bot en segundo plano
+def start_bot():
+    while True:
+        try:
+            schedule.run_pending()
+            time.sleep(60)
+        except Exception as e:
+            print(f"⚠️ ERROR en el bot: {e}")
+
+# 🛠 11. Iniciar Flask en un hilo separado
 def start_flask():
     port = int(os.getenv("PORT", 8080))
     print(f"🚀 Iniciando Flask en Cloud Run en el puerto: {port}")
@@ -126,9 +140,15 @@ def start_flask():
         print(f"❌ ERROR iniciando Flask: {e}")
         exit(1)
 
+# 🚀 12. Ejecutar el bot y el servidor Flask en hilos separados
 if __name__ == "__main__":
     print("🔄 Iniciando servicio...")
 
+    bot_thread = threading.Thread(target=start_bot, daemon=True)
+    bot_thread.start()
+
     flask_thread = threading.Thread(target=start_flask, daemon=True)
     flask_thread.start()
+
     flask_thread.join()
+
