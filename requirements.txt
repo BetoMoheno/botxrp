@@ -2,4 +2,5 @@ Flask
 schedule
 pandas
 numpy
-binance-connector
+python-binance
+
