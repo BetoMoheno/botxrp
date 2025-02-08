@@ -105,3 +105,15 @@ while True:
     
     time.sleep(60)  # Espera 60 segundos antes de volver a verificar
 
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot de trading en ejecución 🚀"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
+
+
