@@ -107,27 +107,16 @@ def home():
 def health():
     return "OK", 200
 
-# 🔄 Función para mantener el bot corriendo en un hilo separado
-def start_bot():
-    while True:
-        try:
-            schedule.run_pending()
-            time.sleep(60)
-        except Exception as e:
-            print(f"⚠️ Error en el bot: {e}")
-
 # 🛠 Iniciar Flask en un hilo separado
 def start_flask():
     port = int(os.environ.get("PORT", 8080))
     print(f"🚀 Iniciando Flask en Cloud Run en el puerto: {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    try:
+        app.run(host="0.0.0.0", port=port, debug=False)
+    except Exception as e:
+        print(f"❌ Error iniciando Flask: {e}")
 
 if __name__ == "__main__":
-    bot_thread = threading.Thread(target=start_bot, daemon=True)
-    bot_thread.start()
-
     flask_thread = threading.Thread(target=start_flask, daemon=True)
     flask_thread.start()
-
     flask_thread.join()
-
