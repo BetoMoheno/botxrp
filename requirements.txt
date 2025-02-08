@@ -1,5 +1,5 @@
+Flask
+schedule
 pandas
 numpy
-schedule
 binance-connector
-Flask
