@@ -7,8 +7,10 @@ from flask import Flask
 from binance.client import Client
 
 # 🔐 1. Cargar claves de API de Binance desde variables de entorno
-api_key = os.getenv("BINANCE_API_KEY")
-api_secret = os.getenv("BINANCE_API_SECRET")
+api_key = os.getenv("SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf
+HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT")
+api_secret = os.getenv("SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf
+HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT")
 
 if not api_key or not api_secret:
     print(f"🔴 ERROR: Claves de API no encontradas. API_KEY={api_key}, API_SECRET={api_secret}")
