@@ -1,9 +1,6 @@
 import os
-import pandas as pd
-import numpy as np
-import schedule
-import time
 import threading
+import time
 from flask import Flask
 from binance.client import Client
 
@@ -13,6 +10,18 @@ api_secret = os.getenv("HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPq
 
 if not api_key or not api_secret:
     raise ValueError("🔴 Error: Claves de API no encontradas en las variables de entorno.")
+
+# ✅ Verificar conexión con Binance
+if not api_key or not api_secret:
+    print("🔴 ERROR: Claves de API de Binance no encontradas. Verifica tus variables de entorno.")
+    exit(1)
+
+try:
+    client = Client(api_key, api_secret)
+    print("✅ Conexión con Binance establecida correctamente")
+except Exception as e:
+    print(f"❌ ERROR al conectar con Binance: {e}")
+    exit(1)
 
 # Conectar con Binance
 client = Client(api_key, api_secret)
@@ -101,22 +110,25 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Bot de trading en ejecución 🚀"
+    return "✅ Bot de trading en ejecución 🚀"
 
 @app.route("/health")
 def health():
-    return "OK", 200
+    return "✅ OK", 200
 
 # 🛠 Iniciar Flask en un hilo separado
 def start_flask():
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.getenv("PORT", 8080))
     print(f"🚀 Iniciando Flask en Cloud Run en el puerto: {port}")
     try:
         app.run(host="0.0.0.0", port=port, debug=False)
     except Exception as e:
-        print(f"❌ Error iniciando Flask: {e}")
+        print(f"❌ ERROR iniciando Flask: {e}")
+        exit(1)
 
 if __name__ == "__main__":
+    print("🔄 Iniciando servicio...")
+
     flask_thread = threading.Thread(target=start_flask, daemon=True)
     flask_thread.start()
     flask_thread.join()
