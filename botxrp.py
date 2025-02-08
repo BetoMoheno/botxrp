@@ -101,6 +101,10 @@ app = Flask(__name__)
 def home():
     return "Bot de trading en ejecución 🚀"
 
+@app.route("/health")
+def health():
+    return "OK", 200
+
 # 🔄 Función para mantener el bot corriendo en un hilo separado
 def start_bot():
     while True:
