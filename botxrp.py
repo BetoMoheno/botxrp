@@ -7,14 +7,12 @@ from flask import Flask
 from binance.client import Client
 
 # 🔐 1. Cargar claves de API de Binance desde variables de entorno
-api_key = os.getenv("SB9riIpm8RMgw36NDvHVoHPWDt41DU16NJbcLw7EdOurws15jdMJLSxQeBoYgtbf")
-api_secret = os.getenv("HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPqtWyILajT")
+api_key = os.getenv("BINANCE_API_KEY")
+api_secret = os.getenv("BINANCE_API_SECRET")
 
 if not api_key or not api_secret:
-    print("🔴 ERROR: Claves de API de Binance no encontradas. Verifica tus variables de entorno.")
-    exit(1)
     print(f"🔴 ERROR: Claves de API no encontradas. API_KEY={api_key}, API_SECRET={api_secret}")
-
+    exit(1)
 
 # 🔗 2. Conectar con Binance
 try:
@@ -89,19 +87,15 @@ def place_order(symbol, side, amount):
 def run_bot():
     print("🚀 Ejecutando bot de trading...")
 
-    # Obtener datos de XRP y PAXGOLD
     xrp_data = get_candles("XRPUSDT")
     paxg_data = get_candles("PAXGUSDT")
 
-    # Calcular señales de trading
     xrp_df = calculate_ut_bot(xrp_data)
     paxg_df = calculate_ut_bot(paxg_data)
 
-    # Decidir en qué activo invertir
     selected_asset = select_best_asset(xrp_df, paxg_df)
     print(f"📊 Mejor activo para invertir: {selected_asset}")
 
-    # Ejecutar compra según el activo en tendencia
     if selected_asset == "XRPUSDT":
         place_order("XRPUSDT", "BUY", 10)
     elif selected_asset == "PAXGUSDT":
@@ -123,7 +117,7 @@ def home():
 def health():
     return "✅ OK", 200
 
-# 🔄 10. Hilo separado para ejecutar el bot en segundo plano
+# 🔄 10. Hilos separados para ejecutar Flask y el bot
 def start_bot():
     while True:
         try:
@@ -132,17 +126,15 @@ def start_bot():
         except Exception as e:
             print(f"⚠️ ERROR en el bot: {e}")
 
-# 🛠 11. Iniciar Flask en un hilo separado
 def start_flask():
     port = int(os.getenv("PORT", 8080))
-    print(f"🚀 Iniciando Flask en Cloud Run en el puerto: {port}")
+    print(f"🚀 Iniciando Flask en el puerto: {port}")
     try:
         app.run(host="0.0.0.0", port=port, debug=False)
     except Exception as e:
         print(f"❌ ERROR iniciando Flask: {e}")
         exit(1)
 
-# 🚀 12. Ejecutar el bot y el servidor Flask en hilos separados
 if __name__ == "__main__":
     print("🔄 Iniciando servicio...")
 
@@ -153,4 +145,5 @@ if __name__ == "__main__":
     flask_thread.start()
 
     flask_thread.join()
+
 
