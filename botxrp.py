@@ -106,6 +106,7 @@ while True:
     time.sleep(60)  # Espera 60 segundos antes de volver a verificar
 
 from flask import Flask
+import threading
 
 app = Flask(__name__)
 
@@ -113,7 +114,21 @@ app = Flask(__name__)
 def home():
     return "Bot de trading en ejecución 🚀"
 
+def start_bot():
+    while True:
+        try:
+            schedule.run_pending()
+            time.sleep(60)
+        except Exception as e:
+            print(f"⚠️ Error en el bot: {e}")
+
 if __name__ == "__main__":
+    # Iniciar el bot en un hilo aparte
+    bot_thread = threading.Thread(target=start_bot)
+    bot_thread.start()
+
+    # Iniciar el servidor Flask
     app.run(host="0.0.0.0", port=8080)
+
 
 
