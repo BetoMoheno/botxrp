@@ -13,6 +13,8 @@ api_secret = os.getenv("HDDuvOW6Njy17QpwzuYjMnV8i1ujS7RCUM7BzrG2lBDeOIkFEwk0HoPq
 if not api_key or not api_secret:
     print("🔴 ERROR: Claves de API de Binance no encontradas. Verifica tus variables de entorno.")
     exit(1)
+    print(f"🔴 ERROR: Claves de API no encontradas. API_KEY={api_key}, API_SECRET={api_secret}")
+
 
 # 🔗 2. Conectar con Binance
 try:
