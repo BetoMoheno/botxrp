@@ -17,3 +17,4 @@ EXPOSE 8080
 # Comando para ejecutar el bot
 CMD ["python", "bot.py"]
 
+
