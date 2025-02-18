@@ -22,6 +22,6 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Comando para ejecutar el bot
-CMD ["python", "botxrp.py"]
+CMD ["python", "botxcripto.py"]
 
 
